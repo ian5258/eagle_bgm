@@ -1,0 +1,66 @@
+name: workflow
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set Version
+        run: |
+          echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+      - name: Set Image Name
+        run: echo ::set-env name=IMAGE_NAME::docker.pkg.github.com/${{ github.repository }}/${{ github.event.repository.name }}:${{ env.RELEASE_VERSION }}
+
+      - name: Build The Docker Image
+        run: |
+          docker build . \
+                  --build-arg COMMIT=${{ github.event.head_commit.id }} \
+                  --build-arg DATE=${{ github.event.head_commit.timestamp }} \
+                  --build-arg TAG=${{ env.RELEASE_VERSION}} \
+                  --file Dockerfile --tag  ${{ env.IMAGE_NAME }}
+
+      - name: Push Image To Github Package
+        run: |
+          docker login docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker push ${{ env.IMAGE_NAME}}
+
+      - name: Remove Image
+        run: |
+          docker image rm ${{ env.IMAGE_NAME}}
+          docker image prune -f --filter label=stage=builder
+
+      - name: Post Version
+        env:
+          HOST: https://script.google.com/macros/s/AKfycbxbup4Kb_IDqbX7BkEQRY7r3j7HDO79-VYnVXpDzN5pjkEfggA/exec
+        run: |
+          curl -s -o /dev/null --request POST $HOST \
+          --form 'project=${{ github.event.repository.name }}' \
+          --form 'version=${{ env.RELEASE_VERSION }}' \
+          --form 'date=${{ github.event.head_commit.timestamp }}' \
+          --form 'commitid=${{ github.event.head_commit.id }}' \
+          --form 'commit=${{ github.event.head_commit.message }}' \
+          --form 'user=${{ github.event.head_commit.author.name }}' \
+          --form 'email=${{ github.event.head_commit.author.email }}' \
+          --form 'commitLink=https://github.com/${{ github.repository }}/commit/${{ github.event.head_commit.id }}'
+
+      - name: Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: all
+          mention: here
+          channel: "#devops"
+          username: "csofans"
+          author_name: ${{ github.event.head_commit.author.name }}
+          icon_url: "https://github.githubassets.com/images/modules/logos_page/Octocat.png"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: https://hooks.slack.com/services/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
+        if: always()

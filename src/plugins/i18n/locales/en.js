@@ -1,0 +1,1 @@
+/* eslint-disable */  export default ({'locale':'en','test':'Test~',})

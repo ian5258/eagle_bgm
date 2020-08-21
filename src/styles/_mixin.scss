@@ -1,0 +1,80 @@
+@mixin size($width: 100%, $height: $width) {
+    width: $width;
+    height: $height;
+  }
+  
+  @mixin clearfix {
+    &:after {
+      display: table;
+      clear: both;
+  
+      content: '';
+    }
+  }
+  
+  @mixin opacity($opacity) {
+    opacity: $opacity;
+  
+    $opacity-ie: $opacity * 100;
+    filter: alpha(opacity=$opacity-ie); //IE8
+  }
+  
+  @mixin position($position, $args) {
+    position: $position;
+  
+    @each $o in top right bottom left {
+      $i: index($args, $o);
+  
+      @if $i and $i+1 <=length($args) and type-of(nth($args, $i + 1))==number {
+        #{$o}: nth($args, $i + 1);
+      }
+    }
+  }
+  
+  // Positioning helpers
+  @mixin absolute($args: '') {
+    @include position(absolute, $args);
+  }
+  
+  @mixin fixed($args: '') {
+    @include position(fixed, $args);
+  }
+  
+  @mixin relative($args: '') {
+    @include position(relative, $args);
+  }
+  
+  @mixin flex($row: center, $column: center) {
+    display: flex;
+    align-items: $row ;
+    justify-content: $column;
+  }
+  
+  @mixin line {
+    border-bottom: 1px solid rgb(234, 241, 248);
+  }
+  
+  @mixin top-line {
+    border-top: 1px solid rgb(224, 234, 244);
+  }
+  @mixin select-none {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  @mixin text-line {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  @mixin border-shadow {
+    box-shadow: 0px 0px 1px 1px rgb(185, 185, 185);
+  }
+  @mixin card-background {
+    background: linear-gradient(-45deg, #69b3d0 50%, transparent 50%),
+      linear-gradient(90deg, #85c8de 100%, transparent 100%);
+    background-repeat: no-repeat;
+  }
+  
